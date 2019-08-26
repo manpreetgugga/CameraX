@@ -73,41 +73,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-<<<<<<< HEAD
-=======
         initUI();
         checkRequiredPermission();
     }
 
     private void initUI() {
->>>>>>> origin/master
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getSupportActionBar().hide();
         setContentView(R.layout.activity_main);
-<<<<<<< HEAD
-        mOrientationListener = new MyOrientationEventListener(this);
-        if (mOrientationListener.canDetectOrientation()) {
-            mOrientationListener.enable();
-        }
-        checkRequiredPermission();
-    }
-
-    private void checkRequiredPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.CAMERA},
-                        MY_CAMERA_REQUEST_CODE);
-            } else {
-                startCamera();
-            }
-        } else {
-            startCamera();
-        }
-=======
-        setUpOrientationChangeListeners();
->>>>>>> origin/master
     }
 
     private void startCamera() {
@@ -116,51 +90,14 @@ public class MainActivity extends AppCompatActivity {
         textureView.post(new Runnable() {
             @Override
             public void run() {
+                setUpOrientationChangeListeners();
                 handleStartOperations();
-<<<<<<< HEAD
-                addScannerView();
-=======
                 updateScannerView();
->>>>>>> origin/master
             }
         });
     }
 
-<<<<<<< HEAD
-    class MyOrientationEventListener extends OrientationEventListener {
-        public MyOrientationEventListener(Context context) {
-            super(context);
-        }
-
-        @Override
-        public void onOrientationChanged(int orientation) {
-            if (orientation <= 45) {
-                currentScreenOrientation = ScreenOrientation.PORTRAIT;
-            } else if (orientation <= 135) {
-                currentScreenOrientation = ScreenOrientation.REVERSE_LANDSCAPE;
-            } else if (orientation <= 225) {
-                currentScreenOrientation = ScreenOrientation.REVERSE_PORTRAIT;
-            } else if (orientation <= 315) {
-                currentScreenOrientation = ScreenOrientation.LANDSCAPE;
-            } else {
-                currentScreenOrientation = ScreenOrientation.PORTRAIT;
-            }
-
-            textureView.post(new Runnable() {
-                @Override
-                public void run() {
-                    addScannerView();
-                }
-            });
-        }
-    }
-
-    public DisplayMetrics displayMetrics;
-
-    private void addScannerView() {
-=======
     private void updateScannerView() {
->>>>>>> origin/master
         Display display = textureView.getDisplay();
         if (display != null) {
             displayMetrics = new DisplayMetrics();
@@ -189,18 +126,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-<<<<<<< HEAD
-    public int dpToPx(int dp) {
-        float density = getResources()
-                .getDisplayMetrics()
-                .density;
-
-        return Math.round((float) dp * density);
-    }
-
-
-=======
->>>>>>> origin/master
     private void handleStartOperations() {
         Rational aspectRatio = new Rational(textureView.getWidth(), textureView.getHeight());
         Size screen = new Size(textureView.getWidth(), textureView.getHeight());
@@ -240,31 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 imageCapture.takePicture(new ImageCapture.OnImageCapturedListener() {
                     @Override
                     public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
-<<<<<<< HEAD
-                        Bitmap imageCaptured = imageToBitmap(image);
-                        imageCaptured = rotateBitmap(imageCaptured);
-
-                        final Bitmap finalImageCaptured = imageCaptured;
-                        rectOverlayView.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (rectOverlayView.rect != null) {
-                                    Bitmap centerCropedImage = getCenterBitmap(finalImageCaptured);
-                                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                                    Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-                                    if (prev != null) {
-                                        ft.remove(prev);
-                                    }
-                                    ft.addToBackStack(null);
-                                    DialogFragment dialogFragment = ImageViewCustomDialogFragment.newInstance(centerCropedImage);
-                                    dialogFragment.setCancelable(true);
-                                    dialogFragment.show(ft, "dialog");
-                                }
-                            }
-                        });
-=======
                         handleOnCameraCaptureSuccess(image);
->>>>>>> origin/master
                         super.onCaptureSuccess(image, rotationDegrees);
                     }
 
