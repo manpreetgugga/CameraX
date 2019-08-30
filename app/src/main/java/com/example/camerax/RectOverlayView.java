@@ -11,17 +11,22 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.fonts.Font;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 public class RectOverlayView extends LinearLayout {
     private Bitmap bitmap;
+    private boolean isPotrait;
+    public Canvas osCanvas;
+    public Rect centerCropRect;
 
-    public RectOverlayView(int width, int height, Context context) {
+    public RectOverlayView(boolean isPortrait,int width, int height ,Context context) {
         super(context);
         this.cameraOverLayWidth = width;
         this.cameraOverLayHeight = height;
+        this.isPotrait = isPortrait;
     }
 
     public RectOverlayView(Context context, AttributeSet attrs) {
@@ -82,6 +87,14 @@ public class RectOverlayView extends LinearLayout {
         rect = new Rect(left, top, right, bottom);
 
         osCanvas.drawRect(rect, paint);
+
+        if(isPotrait){
+            Paint textPaint = new Paint();
+            textPaint.setARGB(200, 254, 0, 0);
+            textPaint.setTextAlign(Paint.Align.CENTER);
+            textPaint.setTextSize(48);
+            osCanvas.drawText("Please rotate to Portrait Mode", centerOfCanvas.x, centerOfCanvas.y, textPaint);
+        }
     }
 
     @Override

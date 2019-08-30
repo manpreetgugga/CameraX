@@ -24,6 +24,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
@@ -107,16 +108,19 @@ public class MainActivity extends AppCompatActivity {
             if (rectOverlayView != null) {
                 myLayout.removeView(rectOverlayView);
             }
+            boolean isPortrait = false;
 
             if (currentScreenOrientation == ScreenOrientation.PORTRAIT) {
-                cameraOverlayWidth = displayMetrics.widthPixels - dpToPx(32);
-                cameraOverlayHeight = (displayMetrics.heightPixels / 3);
+                cameraOverlayWidth = displayMetrics.widthPixels - (displayMetrics.widthPixels / 6);
+                cameraOverlayHeight = (displayMetrics.heightPixels / 4);
+                isPortrait = true;
             } else {
-                cameraOverlayWidth = displayMetrics.widthPixels - dpToPx(32);
-                cameraOverlayHeight = displayMetrics.heightPixels - dpToPx(displayMetrics.heightPixels / 6);
+                cameraOverlayWidth = displayMetrics.widthPixels - (displayMetrics.widthPixels / 6);
+                cameraOverlayHeight = displayMetrics.heightPixels - (displayMetrics.heightPixels / 4);
+                isPortrait = false;
             }
 
-            rectOverlayView = new RectOverlayView(cameraOverlayWidth, cameraOverlayHeight, this);
+            rectOverlayView = new RectOverlayView(isPortrait, cameraOverlayWidth, cameraOverlayHeight, this);
 
             rectOverlayView.setLayoutParams(new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -127,8 +131,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleStartOperations() {
-        Rational aspectRatio = new Rational(textureView.getWidth(), textureView.getHeight());
-        Size screen = new Size(textureView.getWidth(), textureView.getHeight());
+        int width = textureView.getWidth() >= 1080 ? 1080 : textureView.getWidth();
+        int height = textureView.getHeight() >= 1920 ? 1920 : textureView.getHeight();
+
+        Rational aspectRatio = new Rational(width, height);
+        Size screen = new Size(width, height);
 
         PreviewConfig pConfig = new PreviewConfig.Builder()
                 .setTargetAspectRatio(aspectRatio)
@@ -154,27 +161,27 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetRotation(textureView.getDisplay().getRotation())
                 .setTargetResolution(screen)
                 .setFlashMode(FlashMode.AUTO)
-                .setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+                .setCaptureMode(ImageCapture.CaptureMode.MAX_QUALITY)
                 .build();
 
         final ImageCapture imageCapture = new ImageCapture(imageCaptureConfig);
-
         takePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                imageCapture.takePicture(new ImageCapture.OnImageCapturedListener() {
-                    @Override
-                    public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
-                        handleOnCameraCaptureSuccess(image);
-                        super.onCaptureSuccess(image, rotationDegrees);
-                    }
+                if (currentScreenOrientation == ScreenOrientation.REVERSE_LANDSCAPE || currentScreenOrientation == ScreenOrientation.LANDSCAPE) {
+                    imageCapture.takePicture(new ImageCapture.OnImageCapturedListener() {
+                        @Override
+                        public void onCaptureSuccess(ImageProxy image, int rotationDegrees) {
+                            handleOnCameraCaptureSuccess(image);
+                            super.onCaptureSuccess(image, rotationDegrees);
+                        }
 
-                    @Override
-                    public void onError(ImageCapture.UseCaseError useCaseError, String message, @Nullable Throwable cause) {
-                        super.onError(useCaseError, message, cause);
-
-                    }
-                });
+                        @Override
+                        public void onError(ImageCapture.UseCaseError useCaseError, String message, @Nullable Throwable cause) {
+                            super.onError(useCaseError, message, cause);
+                        }
+                    });
+                }
             }
         });
 
@@ -185,28 +192,20 @@ public class MainActivity extends AppCompatActivity {
         CameraX.bindToLifecycle(this, preview, imageCapture, imageAnalysis);
     }
 
-    public void handleOnCameraCaptureSuccess(ImageProxy image){
+    public void handleOnCameraCaptureSuccess(ImageProxy image) {
         Bitmap imageCaptured = imageToBitmap(image);
         imageCaptured = rotateBitmap(imageCaptured);
-
         final Bitmap finalImageCaptured = imageCaptured;
-        rectOverlayView.post(new Runnable() {
-            @Override
-            public void run() {
-                if (rectOverlayView.rect != null) {
-                    Bitmap centerCropedImage = getCenterBitmap(finalImageCaptured);
-                    FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                    Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-                    if (prev != null) {
-                        ft.remove(prev);
-                    }
-                    ft.addToBackStack(null);
-                    DialogFragment dialogFragment = ImageViewCustomDialogFragment.newInstance(centerCropedImage);
-                    dialogFragment.setCancelable(true);
-                    dialogFragment.show(ft, "dialog");
-                }
-            }
-        });
+        Bitmap centerCropedImage = getCenterBitmap(finalImageCaptured);
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
+        if (prev != null) {
+            ft.remove(prev);
+        }
+        ft.addToBackStack(null);
+        DialogFragment dialogFragment = ImageViewCustomDialogFragment.newInstance(centerCropedImage);
+        dialogFragment.setCancelable(true);
+        dialogFragment.show(ft, "dialog");
     }
 
     @Override
@@ -223,8 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateTransform() {
         Matrix mx = new Matrix();
-        float w = textureView.getMeasuredWidth();
-        float h = textureView.getMeasuredHeight();
+
+        int width = textureView.getWidth() >= 1080 ? 1080 : textureView.getWidth();
+        int height = textureView.getHeight() >= 1920 ? 1920 : textureView.getHeight();
+
+        float w = width;
+        float h = height;
 
         float cX = w / 2f;
         float cY = h / 2f;
@@ -280,7 +283,22 @@ public class MainActivity extends AppCompatActivity {
 
         final Paint paint = new Paint();
 
-        Rect rect = new Rect(dpToPx(rectOverlayView.rect.left) - dpToPx(32), dpToPx(rectOverlayView.rect.top) - dpToPx(32), (dpToPx(rectOverlayView.rect.right) - dpToPx(32)), (dpToPx(rectOverlayView.rect.bottom) - dpToPx(32)));
+        Point centerOfCanvas = new Point(bitmap.getWidth() / 2, bitmap.getHeight() / 2);
+
+        int rectW = dpToPx(rectOverlayView.cameraOverLayWidth);
+        int rectH = dpToPx(rectOverlayView.cameraOverLayHeight);
+
+        int left = centerOfCanvas.x - (rectW / 2);
+        int top = centerOfCanvas.y - (rectH / 2);
+        int right = centerOfCanvas.x + (rectW / 2);
+        int bottom = centerOfCanvas.y + (rectH / 2);
+        Rect rect = new Rect(left, top, right, bottom);
+
+
+//        Rect rect = new Rect(rectOverlayView.rect.left - (rectOverlayView.rect.left / 4),
+//                rectOverlayView.rect.top - (rectOverlayView.rect.top / 6),
+//                dpToPx(rectOverlayView.rect.right) - dpToPx((rectOverlayView.rect.right / 4)),
+//                dpToPx(rectOverlayView.rect.bottom) - dpToPx((rectOverlayView.rect.bottom / 6)));
         canvas.drawBitmap(bitmap, rect, rect, paint);
 
         if (currentScreenOrientation == ScreenOrientation.REVERSE_LANDSCAPE) {
@@ -353,11 +371,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public int dpToPx(int dp) {
-        float density = getResources()
-                .getDisplayMetrics()
-                .density;
+    enum dimens {
+        LDPI(0.75f),
+        MDPI(1.0f),
+        HDPI(1.5f),
+        XHDPI(2.0f),
+        XXDPI(3.0f),
+        XXXDPI(4.75f);
 
-        return Math.round((float) dp * density);
+        dimens(float v) {
+        }
+    }
+
+    private int dpToPx(int dp) {
+        if (getResources().getDisplayMetrics().density <= 2.0f) {
+            return Math.round(dp * getResources().getDisplayMetrics().density);
+        }
+        return dp;
     }
 }

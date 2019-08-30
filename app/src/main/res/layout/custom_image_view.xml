@@ -8,12 +8,11 @@
         android:id="@+id/caputuredImage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:scaleType="centerInside"
         app:zoomage_restrictBounds="false"
         app:zoomage_animateOnReset="true"
-        app:zoomage_autoResetMode="UNDER"
-        app:zoomage_autoCenter="true"
         app:zoomage_zoomable="true"
-        app:zoomage_translatable="true"
+        app:zoomage_translatable="false"
         app:zoomage_minScale="0.6"
         app:zoomage_maxScale="8"/>
 

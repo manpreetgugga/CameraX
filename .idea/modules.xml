@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CameraXGit.iml" filepath="$PROJECT_DIR$/CameraXGit.iml" />
+      <module fileurl="file://$PROJECT_DIR$/CameraX.iml" filepath="$PROJECT_DIR$/CameraX.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
 </project>
