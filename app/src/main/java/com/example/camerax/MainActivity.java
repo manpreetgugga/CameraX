@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private TextureView textureView;
     private RectOverlayView rectOverlayView;
     public DisplayMetrics displayMetrics;
+    public static Bitmap centerCropBitmap;
 
     public ScreenOrientation currentScreenOrientation;
 
@@ -196,16 +198,14 @@ public class MainActivity extends AppCompatActivity {
         Bitmap imageCaptured = imageToBitmap(image);
         imageCaptured = rotateBitmap(imageCaptured);
         final Bitmap finalImageCaptured = imageCaptured;
-        Bitmap centerCropedImage = getCenterBitmap(finalImageCaptured);
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        Fragment prev = getSupportFragmentManager().findFragmentByTag("dialog");
-        if (prev != null) {
-            ft.remove(prev);
-        }
-        ft.addToBackStack(null);
-        DialogFragment dialogFragment = ImageViewCustomDialogFragment.newInstance(centerCropedImage);
-        dialogFragment.setCancelable(true);
-        dialogFragment.show(ft, "dialog");
+        Bitmap centerCropImage = getCenterBitmap(finalImageCaptured);
+        startViewCropImageActivity(centerCropImage);
+    }
+
+    private void startViewCropImageActivity(Bitmap centerCropImage) {
+        centerCropBitmap = centerCropImage;
+        Intent anotherIntent = new Intent(this, CroppedImageActivity.class);
+        startActivity(anotherIntent);
     }
 
     @Override
@@ -299,6 +299,7 @@ public class MainActivity extends AppCompatActivity {
 //                rectOverlayView.rect.top - (rectOverlayView.rect.top / 6),
 //                dpToPx(rectOverlayView.rect.right) - dpToPx((rectOverlayView.rect.right / 4)),
 //                dpToPx(rectOverlayView.rect.bottom) - dpToPx((rectOverlayView.rect.bottom / 6)));
+
         canvas.drawBitmap(bitmap, rect, rect, paint);
 
         if (currentScreenOrientation == ScreenOrientation.REVERSE_LANDSCAPE) {
